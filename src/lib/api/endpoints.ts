@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   AuthResponse,
+  ConnectionStatus,
   Conversation,
   CreatedInvite,
   Invite,
@@ -19,6 +20,9 @@ export interface PublicConfig {
     graphApiVersion: string;
   };
   threeSixtyDialog: {
+    enabled: boolean;
+  };
+  unofficial: {
     enabled: boolean;
   };
 }
@@ -77,6 +81,20 @@ export const numbersApi = {
       .then((r) => r.data),
   threeSixtyConnect: (channelId: string) =>
     api.post<WhatsAppNumber>('/whatsapp-numbers/360dialog/connect', { channelId }).then((r) => r.data),
+  // Unofficial (self-hosted gateway) QR / pairing-code onboarding.
+  connectUnofficial: (body: {
+    displayName: string;
+    displayPhone: string;
+    engine?: 'BAILEYS' | 'WWEBJS';
+  }) => api.post<WhatsAppNumber>('/whatsapp-numbers/unofficial/connect', body).then((r) => r.data),
+  connectionStatus: (id: string) =>
+    api.get<ConnectionStatus>(`/whatsapp-numbers/${id}/connection`).then((r) => r.data),
+  requestPairingCode: (id: string, phoneNumber: string) =>
+    api
+      .post<{ pairingCode: string; status: string }>(`/whatsapp-numbers/${id}/pairing-code`, { phoneNumber })
+      .then((r) => r.data),
+  disconnectUnofficial: (id: string) =>
+    api.post<WhatsAppNumber>(`/whatsapp-numbers/${id}/disconnect`).then((r) => r.data),
 };
 
 export const conversationsApi = {

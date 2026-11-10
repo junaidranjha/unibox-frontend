@@ -1,12 +1,13 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Users } from 'lucide-react';
+import { Plus, QrCode, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Topbar } from '@/components/dashboard/topbar';
 import { AddNumberDialog } from '@/components/numbers/add-number-dialog';
 import { AssignUsersDialog } from '@/components/numbers/assign-users-dialog';
+import { ConnectUnofficialDialog } from '@/components/numbers/connect-unofficial-dialog';
 import { EmbeddedSignupButton } from '@/components/numbers/embedded-signup-button';
 import { Connect360DialogButton } from '@/components/numbers/connect-360dialog-button';
 import { Badge } from '@/components/ui/badge';
@@ -23,13 +24,15 @@ export default function NumbersPage(): JSX.Element {
 
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [assigning, setAssigning] = useState<WhatsAppNumber | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ['whatsapp-numbers'], queryFn: numbersApi.list });
   const { data: config } = useQuery({ queryKey: ['public-config'], queryFn: configApi.get });
   const embeddedSignupOn = !!config?.embeddedSignup.enabled && !!config.embeddedSignup.metaAppId;
   const threeSixtyOn = !!config?.threeSixtyDialog.enabled;
-  const hasOnboarding = embeddedSignupOn || threeSixtyOn;
+  const unofficialOn = !!config?.unofficial.enabled;
+  const hasOnboarding = embeddedSignupOn || threeSixtyOn || unofficialOn;
   const remove = useMutation({
     mutationFn: numbersApi.remove,
     onSuccess: () => {
@@ -55,6 +58,11 @@ export default function NumbersPage(): JSX.Element {
                 />
               )}
               {threeSixtyOn && <Connect360DialogButton />}
+              {unofficialOn && (
+                <Button variant="outline" onClick={() => setQrOpen(true)}>
+                  <QrCode className="mr-2 h-4 w-4" /> Connect via QR
+                </Button>
+              )}
               <Button variant={hasOnboarding ? 'outline' : 'default'} onClick={() => setAddOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> {hasOnboarding ? 'Add manually' : 'Connect number'}
               </Button>
@@ -88,7 +96,11 @@ export default function NumbersPage(): JSX.Element {
                     <div className="flex items-center gap-2">
                       {n.displayName}
                       <Badge variant="muted">
-                        {n.provider === 'THREESIXTYDIALOG' ? '360dialog' : 'Meta'}
+                        {n.provider === 'THREESIXTYDIALOG'
+                          ? '360dialog'
+                          : n.provider === 'UNOFFICIAL'
+                            ? 'Unofficial'
+                            : 'Meta'}
                       </Badge>
                     </div>
                   </td>
@@ -136,6 +148,7 @@ export default function NumbersPage(): JSX.Element {
       </div>
 
       <AddNumberDialog open={addOpen} onOpenChange={setAddOpen} />
+      <ConnectUnofficialDialog open={qrOpen} onOpenChange={setQrOpen} />
       {assigning && (
         <AssignUsersDialog
           number={assigning}

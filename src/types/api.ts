@@ -43,18 +43,25 @@ export interface CreatedInvite extends Invite {
   acceptUrl: string;
 }
 
-export type WhatsAppProvider = 'META' | 'THREESIXTYDIALOG';
+export type WhatsAppProvider = 'META' | 'THREESIXTYDIALOG' | 'UNOFFICIAL';
 
 export interface WhatsAppNumber {
   id: string;
   provider: WhatsAppProvider;
   phoneNumberId: string;
-  wabaId: string;
+  wabaId: string | null;
   displayPhone: string;
   displayName: string;
   isActive: boolean;
   createdAt: string;
   assignedUserIds: string[];
+}
+
+/** Link state of an UNOFFICIAL (gateway) number, polled during QR onboarding. */
+export interface ConnectionStatus {
+  status: string; // gateway session status: qr_ready | authenticating | ready | ...
+  connected: boolean;
+  qrCode?: string | null; // data-URL PNG to render while qr_ready
 }
 
 export interface Contact {
